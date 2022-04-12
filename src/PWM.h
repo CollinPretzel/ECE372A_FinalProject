@@ -4,14 +4,13 @@
 // Assignment:     Lab 4
 //----------------------------------------------------------------------//
 
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef PWM_H
+#define PWM_H
 
 #include <avr/io.h>
 
-void initTimer1();
-void delayS(unsigned int delay);
-void initTimer0();
-void delayMs(unsigned int delay); 
+void initPWMTimer3();
+void initPWMTimer4();
+void changeDutyCycle(int newCycle);
 
 #endif
