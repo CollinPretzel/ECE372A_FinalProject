@@ -39,6 +39,7 @@ void initPWMTimer4(){
 }
 
 //newCycle is the 10 bit output from the ADC
+// Change this to match note frequency
 void changeDutyCycle(int newCycle){
     bool clockwise = true;
     int newCycle10Bit = newCycle & 0x3FF;
