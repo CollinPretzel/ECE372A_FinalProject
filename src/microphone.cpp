@@ -7,5 +7,5 @@ void initMic(){
 }
 
 void freqID(unsigned char *note, unsigned char *octave, unsigned char freq){
-  // Calculate note and octave using given frequency - reference MIDI Chart
+  // Determine note and octave using given frequency - reference MIDI Chart
 }
