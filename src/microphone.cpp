@@ -21,31 +21,30 @@ float octave5[] = {523.25,554.37,587.33,622.25,659.26,698.46,739.99,783.99,830.6
 float octave6[] = {1046.50,1108.73,1174.66,1244.51,1318.51,1396.91,1479.98,1567.98,1661.22,1760.00,1864.66,1975.53};
 float octave7[] = {2093.00,2217.46,2349.32,2489.02,2637.02,2793.83,2959.96,3135.96,3322.44,3520.00,3729.31,3951.07};
 float octave8[] = {4186.01,4434.92,4698.64,4978.03,5274.04,5587.65,5919.91,6271.93,6644.88,7040.00,7458.62,7902.13};
-float* octaves[9] = {octave0, octave1, octave2, octave3, octave4, octave5, octave6, octave7, octave8};
-unsigned char notes[] = {'C','C','D','D','E','F','F','G','G','A','A','B'};
+float* octaves[] = {octave0, octave1, octave2, octave3, octave4, octave5, octave6, octave7, octave8};
 void freqID(unsigned char *note, unsigned char *octave, float freq){
     for(int i = 0; i < 9; i++){
         if(freq < octaves[i][0] || freq > octaves[i][8]){
             continue;
         }
         if(myAbs(freq-octaves[i][0]) < myAbs(freq-octaves[i][1])){
-            *note = notes[0];
-            *octave = '0'+i;
+            *note = 0;
+            *octave = i;
             return;
         }
         for(int j = 1; j < 11; j++){
             if(myAbs(freq-octaves[i][j]) < myAbs(freq-octaves[i][j-1]) && myAbs(freq-octaves[i][j]) < myAbs(freq-octaves[i][j+1])){
-                *note = notes[j];
-                *octave = '0'+i;
+                *note = j;
+                *octave = i;
                 return;
             }
         }
         if(myAbs(freq-octaves[i][11]) < myAbs(freq-octaves[i][10])){
-            *note = notes[11];
-            *octave = '0'+i;
+            *note = 11;
+            *octave = i;
             return;
         }
     }
-    *note = '?';
-    *octave = '?';
+    *note = 12;
+    *octave = 9;
 }
