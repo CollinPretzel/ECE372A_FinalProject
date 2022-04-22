@@ -40,6 +40,11 @@ void freqID(unsigned char *note, unsigned char *octave, float freq){
                 return;
             }
         }
+        if(myAbs(freq-octaves[i][11]) < myAbs(freq-octaves[i][10])){
+            *note = notes[11];
+            *octave = '0'+i;
+            return;
+        }
     }
     *note = '?';
     *octave = '?';
