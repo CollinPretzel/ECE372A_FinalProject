@@ -9,24 +9,26 @@
 
 
 /* Initialize timer 1, you should not turn the timer on here. Use CTC mode  .*/
-void initTimer1(){
-    //Set up timer 1 for ctc mode with a prescaler of 1024
+void initTimer1() {
+	// sets timer to CTC mode
     TCCR1A &= ~(1 << WGM10);
     TCCR1A &= ~(1 << WGM11);
     TCCR1B |= (1 << WGM12);
     TCCR1B &= ~(1 << WGM13);
-    //Set up prescaler of 1024
-    TCCR1B |= ((1<<CS12)|(1<<CS10));
+
+    // sets prescalar to 1
+    TCCR1B |= (1 << CS10);
     TCCR1B &= ~(1 << CS11);
-    //OCR1A = 2 - Set up compare register = 15625-1 = 15624
-    OCR1AH = 0x3D;
-    OCR1AL = 0x08;
-    TCNT1 = 0; // Start count at 0
+    TCCR1B &= ~(1 << CS12);
+
+    OCR1AH = 0x00;
+    // counts from 0-f
+    OCR1AL = 0x0f;
 }
 
 /* This delays the program an amount of microseconds specified by unsigned int delay.
 */
-void delayS(unsigned int delay){
+void delayUs(unsigned int delay){
     unsigned int usElapsed = 0;
     TCNT1 = 0;
     TIFR1 |= (1 << OCF1A);

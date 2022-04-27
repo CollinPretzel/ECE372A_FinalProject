@@ -1,6 +1,7 @@
 #include "ADC.h"
-#include <avr/io.h>
 #include <Arduino.h>
+#include <avr/io.h>
+
 
 
 // v_k = (5/1024)*k
@@ -43,7 +44,6 @@ int getADCOutput() {
     while(1) {
         if (ADCSRA & (1 << ADIF)) {
             outputValue = ADCL;
-            // if this doesn't work it's Jackson's fault (change the '|=' to '+=')
             outputValue += ((unsigned int) ADCH) << 8; // this line definitely won't work
             return outputValue;
         }
