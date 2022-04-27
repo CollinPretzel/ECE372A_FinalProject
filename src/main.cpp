@@ -17,10 +17,16 @@
 #include "switch.h"
 #include "timer.h"
 #include "spi.h"
+#include "microphone.h"
 
 // definitions
 #define LONG_DELAY 200
 #define SHORT_DELAY 100
+
+#define SAMPLE_RATE 325000
+#define NUM_NOTES 20
+
+unsigned char noteHistory[NUM_NOTES*2];
 
 // ADC variables
 byte newData = 0;
@@ -29,7 +35,7 @@ unsigned int time = 0;//keeps time and sends vales to store in timer[] occasiona
 int timer[10];//sstorage for timing of events
 int slope[10];//storage for slope of events
 unsigned int totalTimer;//used to calculate period
-unsigned int period;//storage for period of wave
+volatile unsigned int period;//storage for period of wave
 byte index = 0;//current storage index
 float frequency;//storage for frequency calculations
 int maxSlope = 0;//used to calculate max slope as trigger point
@@ -63,6 +69,9 @@ byte prevData = 0, newData = 0;
 boolean clipping = 0;
 
 int main(){
+  for(int i=0;i<NUM_NOTES*2;i++){
+    noteHistory[i] = -1;
+  }
   DDRB&=~(1<<DDB7);
   PORTB|=(1<<PORTB7);
   Serial.begin(9600);
@@ -89,36 +98,60 @@ int main(){
   //initGyroscope();
   Serial.println("Done Initializing");
   sei(); // Enable global interrupts.
-
+  bool playing = false;
   char count = 0;
 // while loop
   while(1){
     Serial.flush();
     delayMs(1000);
     //eightBitCommandWithDelay(0b00011100,40);
-    switch(button){
-      case wp: // Don't change anything if the program is waiting for a button press
-        break;
-      case pd:
-        delayMs(1); // Give some time to debounce and then change the state
-        button = wr;
-        break;
-      case wr:
-        break; // Again, if the button is still pressed we don't really want to change anything
-      case rd:
-        delayMs(1); // More debouncing time before saying the button is fully unreleased
-        button = wp;
-        // Turn off buzzer
-	      IncFrequency(1); // Can't divide by zero
-        break;
+    if(PINA & (1<<PB2)){//change to the pin for the replay button
+      playing = true;
+      char curNote = noteHistory[0];
+      char curOctave = noteHistory[1];
+      //Display current note on the LED array
+      //Display note history on LCD
+      //play current note on the speaker for a little bit
+      for(int i=0;i<NUM_NOTES*2-2;i++){//remove the first note from the history
+        noteHistory[i] = noteHistory[i+2];
+      }
+    } else {
+      if(playing){
+        for(int i=0;i<NUM_NOTES*2;i++){
+          noteHistory[i] = -1;
+        }
+      }
+      playing = false;
     }
-  // needed if we want an indicator light that for when sound is out of range
-  if (clipping){//if currently clipping
-    PORTB &= B11011111;//turn off clipping indicator led
-    clipping = 0;
-  }
+    if(PINA&(1<<PB3) && !playing){//change to the pin for the record button
+      frequency = SAMPLE_RATE/period;
+      Serial.print("Frequency: ");
+      Serial.println(frequency);
+      unsigned char octave = 0;
+      unsigned char note = 0;
+      freqID(&note,&octave,frequency);
+      Serial.print("Note: ");
+      Serial.print(note);
+      Serial.print(" Octave: ");
+      Serial.println(octave);
+      if(noteHistory[0] != note || noteHistory[1] != octave){//Save old notes to history if it's a new note
+        for(int i=2;i<NUM_NOTES*2;i++){
+          noteHistory[i] = noteHistory[i-2];
+        }
+        noteHistory[0]=note;
+        noteHistory[1]=octave;
+      }
+      //Print note to the ledMatrix
+      //Print note history to LCD
+    }
+    
+    // needed if we want an indicator light that for when sound is out of range
+    if (clipping){//if currently clipping
+      PORTB &= B11011111;//turn off clipping indicator led
+      clipping = 0;
+    }
 
-  return 0;
+    return 0;
   }
 }
 
