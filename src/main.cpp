@@ -125,8 +125,14 @@ int main(){
       char curNote = noteHistory[0];
       char curOctave = octaveHistory[0];
       //Display current note on the LED array
+      writeNote(curNote);
       //Display note history on LCD
+      moveCursor(0,0);
+      writeString(noteHistory);
+      moveCursor(1,0);
+      writeString(octaveHistory);
       //play current note on the speaker for a little bit
+      IncFrequency(octaves[curOctave][curNote]);
       for(int i=0;i<NUM_NOTES-1;i++){//remove the first note from the history
         noteHistory[i] = noteHistory[i+1];
         octaveHistory[i] = octaveHistory[i+1];
@@ -134,8 +140,8 @@ int main(){
     } else {
       if(playing){
         for(int i=0;i<NUM_NOTES;i++){
-          noteHistory[i] = 255;
-          octaveHistory[i] = 255;
+          noteHistory[i] = -1;
+          octaveHistory[i] = -1;
         }
       }
       playing = false;
@@ -160,7 +166,12 @@ int main(){
         octaveHistory[0]=octave;
       }
       //Print note to the ledMatrix
+      writeNote(note);
       //Print note history to LCD
+      moveCursor(0,0);
+      writeString(noteHistory);
+      moveCursor(1,0);
+      writeString(octaveHistory);
     }
     
     // needed if we want an indicator light that for when sound is out of range
