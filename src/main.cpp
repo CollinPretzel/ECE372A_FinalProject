@@ -26,7 +26,8 @@
 #define SAMPLE_RATE 325000
 #define NUM_NOTES 20
 
-unsigned char noteHistory[NUM_NOTES*2];
+unsigned char noteHistory[NUM_NOTES];
+unsigned char octaveHistory[NUM_NOTES];
 
 // ADC variables
 byte newData = 0;
@@ -69,8 +70,9 @@ byte prevData = 0, newData = 0;
 boolean clipping = 0;
 
 int main(){
-  for(int i=0;i<NUM_NOTES*2;i++){
+  for(int i=0;i<NUM_NOTES;i++){
     noteHistory[i] = -1;
+    octaveHistory[i] = -1;
   }
   DDRB&=~(1<<DDB7);
   PORTB|=(1<<PORTB7);
@@ -108,17 +110,19 @@ int main(){
     if(PINA & (1<<PB2)){//change to the pin for the replay button
       playing = true;
       char curNote = noteHistory[0];
-      char curOctave = noteHistory[1];
+      char curOctave = octaveHistory[0];
       //Display current note on the LED array
       //Display note history on LCD
       //play current note on the speaker for a little bit
-      for(int i=0;i<NUM_NOTES*2-2;i++){//remove the first note from the history
-        noteHistory[i] = noteHistory[i+2];
+      for(int i=0;i<NUM_NOTES-1;i++){//remove the first note from the history
+        noteHistory[i] = noteHistory[i+1];
+        octaveHistory[i] = octaveHistory[i+1];
       }
     } else {
       if(playing){
-        for(int i=0;i<NUM_NOTES*2;i++){
+        for(int i=0;i<NUM_NOTES;i++){
           noteHistory[i] = -1;
+          octaveHistory[i] = -1;
         }
       }
       playing = false;
@@ -134,12 +138,13 @@ int main(){
       Serial.print(note);
       Serial.print(" Octave: ");
       Serial.println(octave);
-      if(noteHistory[0] != note || noteHistory[1] != octave){//Save old notes to history if it's a new note
-        for(int i=2;i<NUM_NOTES*2;i++){
-          noteHistory[i] = noteHistory[i-2];
+      if(noteHistory[0] != note || octaveHistory[0] != octave){//Save old notes to history if it's a new note
+        for(int i=1;i<NUM_NOTES;i++){
+          noteHistory[i] = noteHistory[i-1];
+          octaveHistory[i] = octaveHistory[i-1];
         }
         noteHistory[0]=note;
-        noteHistory[1]=octave;
+        octaveHistory[0]=octave;
       }
       //Print note to the ledMatrix
       //Print note history to LCD
