@@ -18,6 +18,8 @@
 #include "timer.h"
 #include "spi.h"
 #include "microphone.h"
+#include "lcd.h"
+#include "ADC.h"
 
 // definitions
 #define LONG_DELAY 200

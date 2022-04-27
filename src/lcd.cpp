@@ -95,7 +95,7 @@ void writeCharacter(unsigned char character){
  * remember that a c string always ends with the '\0' character and
  * that this should just call writeCharacter multiple times.
  */
-void writeString(const char *string){
+void writeString(unsigned char *string){
   while(*string != '\0'){
     writeCharacter(*string);
     string++;

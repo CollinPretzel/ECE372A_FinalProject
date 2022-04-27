@@ -7,5 +7,6 @@
 void initLEDSPI();
 void initLEDMatrix();
 void writeToMatrix(unsigned char addy, unsigned int data);
+void writeNote(unsigned char);
 
 #endif
