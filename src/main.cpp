@@ -26,8 +26,8 @@
 #define SAMPLE_RATE 325000
 #define NUM_NOTES 20
 
-unsigned char noteHistory[NUM_NOTES];
-unsigned char octaveHistory[NUM_NOTES];
+unsigned char noteHistory[NUM_NOTES+1];
+unsigned char octaveHistory[NUM_NOTES+1];
 
 // ADC variables
 byte newData = 0;
@@ -71,9 +71,11 @@ boolean clipping = 0;
 
 int main(){
   for(int i=0;i<NUM_NOTES;i++){
-    noteHistory[i] = -1;
-    octaveHistory[i] = -1;
+    noteHistory[i] = 255;
+    octaveHistory[i] = 255;
   }
+  noteHistory[NUM_NOTES] = 0;
+  octaveHistory[NUM_NOTES] = 0;
   DDRB&=~(1<<DDB7);
   PORTB|=(1<<PORTB7);
   Serial.begin(9600);
@@ -121,8 +123,8 @@ int main(){
     } else {
       if(playing){
         for(int i=0;i<NUM_NOTES;i++){
-          noteHistory[i] = -1;
-          octaveHistory[i] = -1;
+          noteHistory[i] = 255;
+          octaveHistory[i] = 255;
         }
       }
       playing = false;
