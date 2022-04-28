@@ -106,13 +106,10 @@ int main(){
   initSwitchPB3();
   Serial.println("Initializing PWM");
   initPWM_Pins();
-  Serial.println("new Initializing I2C");
-  //initI2C();
-  Serial.println("Initializing Accelerometer");
-  //wakeUp();
-  //initAccelerometer();
-  Serial.println("Initializing Gyroscope");
-  //initGyroscope();
+  Serial.println("Initializing LCD");
+  initLCDPins();
+  Serial.println("Initializing ADC");
+  initADC();
   Serial.println("Done Initializing");
   sei(); // Enable global interrupts.
   bool playing = false;
