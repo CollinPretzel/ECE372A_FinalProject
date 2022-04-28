@@ -14,8 +14,8 @@ void initPWM_Pins(){
     DDRH |= (1<<DDH5); //Set Pin 8 on board to output, which is OC4C, PORTH5, PWM
 }
 
-void IncFrequency(unsigned int frequency){
-    OCR4A = 16000000 / frequency;
+void IncFrequency(float frequency){
+    OCR4A = int(16000000 / frequency);
     OCR4AH = OCR4A >> 8;
     OCR4AL = OCR4A;
     OCR4CH = OCR4AH >> 1;
