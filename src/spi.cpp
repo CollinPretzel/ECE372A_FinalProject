@@ -40,9 +40,9 @@ void writeNote(unsigned char note){
          writeToMatrix(0x01, 0b00000000);
          writeToMatrix(0x02, 0b00111100);
          writeToMatrix(0x03, 0b01000010);
-         writeToMatrix(0x04, 0b10000001);
+         writeToMatrix(0x04, 0b10000000);
          writeToMatrix(0x05, 0b10000000);
-         writeToMatrix(0x06, 0b10000001);
+         writeToMatrix(0x06, 0b10000000);
          writeToMatrix(0x07, 0b01000010);
          writeToMatrix(0x08, 0b00111100);
          break;
@@ -50,9 +50,9 @@ void writeNote(unsigned char note){
          writeToMatrix(0x01, 0b00000001);
          writeToMatrix(0x02, 0b00111100);
          writeToMatrix(0x03, 0b01000010);
-         writeToMatrix(0x04, 0b10000001);
+         writeToMatrix(0x04, 0b10000000);
          writeToMatrix(0x05, 0b10000000);
-         writeToMatrix(0x06, 0b10000001);
+         writeToMatrix(0x06, 0b10000000);
          writeToMatrix(0x07, 0b01000010);
          writeToMatrix(0x08, 0b00111100);
          break;
