@@ -11,8 +11,8 @@ void initADC() {
     ADMUX |= (1 << REFS0);
     ADMUX &= ~(1 << REFS1);
 
-    // right justify mux output
-    ADMUX &= ~(1 << ADLAR);
+    // left justify mux output
+    ADMUX |= (1 << ADLAR);
 
     // Set single ended input
     ADMUX &= ~((1 << MUX2) | (1 << MUX1) | (1 << MUX0));
@@ -25,11 +25,12 @@ void initADC() {
     // enable ADC
     ADCSRA |= (1 << ADEN);
 
-    // disable ADC interrupts
-    //ADCSRA &= ~(1 << ADIE);
+    ADCSRA |= (1<<ADATE);
 
-    // do we need a prescalar? This is a prescalar of 128. Sample rate 9615 kHz
-    ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+    ADCSRA |= (1 << ADIE);
+
+    // do we need a prescalar? This is a prescalar of 32. Sample rate 9615 kHz
+    ADCSRA |= (1 << ADPS2) | (1 << ADPS0);
 
     // disable ADC0 pin digital input - pin A0 on board
     DIDR0 |= (1 << ADC0D);

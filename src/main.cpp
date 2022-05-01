@@ -8,6 +8,12 @@
 // for the exception key one-line code such as checking the state of the pin.
 //
 // Requirements:
+// PINS:
+// - 11,13 - Switches
+// - 12 - LCD
+// - 10 - LCD
+// - 9 - Clipping LED
+// - 22,23,24,25 - LCD
 //----------------------------------------------------------------------//
 
 #include <Arduino.h>
@@ -25,7 +31,7 @@
 #define LONG_DELAY 200
 #define SHORT_DELAY 100
 
-#define SAMPLE_RATE 325000
+#define SAMPLE_RATE 500000
 #define NUM_NOTES 20
 
 unsigned char noteHistory[NUM_NOTES+1];
@@ -68,20 +74,34 @@ enum LEDState{smile,frown};
 volatile state button = wp;
 volatile LEDState led = smile;
 
-byte prevData = 0, newData = 0;
 boolean clipping = 0;
 
-float octave0[] = {16.35,17.32,18.35,19.45,20.60,21.83,23.12,24.50,25.96,27.50,29.14,30.87};
-float octave1[] = {32.70,34.65,36.71,38.89,41.20,43.65,46.25,49.00,51.91,55.00,58.27,61.74};
-float octave2[] = {65.41,69.30,73.42,77.78,82.41,87.31,92.50,98.00,103.83,110.00,116.54,123.47};
-float octave3[] = {130.81,138.59,146.83,155.56,164.81,174.61,185.00,196.00,207.65,220.00,233.08,246.94};
-float octave4[] = {261.63,277.18,293.66,311.13,329.63,349.23,369.99,392.00,415.30,440.00,466.16,493.88};
-float octave5[] = {523.25,554.37,587.33,622.25,659.26,698.46,739.99,783.99,830.61,880.00,932.33,987.77};
-float octave6[] = {1046.50,1108.73,1174.66,1244.51,1318.51,1396.91,1479.98,1567.98,1661.22,1760.00,1864.66,1975.53};
-float octave7[] = {2093.00,2217.46,2349.32,2489.02,2637.02,2793.83,2959.96,3135.96,3322.44,3520.00,3729.31,3951.07};
-float octave8[] = {4186.01,4434.92,4698.64,4978.03,5274.04,5587.65,5919.91,6271.93,6644.88,7040.00,7458.62,7902.13};
-float* octaves[] = {octave0, octave1, octave2, octave3, octave4, octave5, octave6, octave7, octave8};
+float octave20[] = {16.35,17.32,18.35,19.45,20.60,21.83,23.12,24.50,25.96,27.50,29.14,30.87};
+float octave21[] = {32.70,34.65,36.71,38.89,41.20,43.65,46.25,49.00,51.91,55.00,58.27,61.74};
+float octave22[] = {65.41,69.30,73.42,77.78,82.41,87.31,92.50,98.00,103.83,110.00,116.54,123.47};
+float octave23[] = {130.81,138.59,146.83,155.56,164.81,174.61,185.00,196.00,207.65,220.00,233.08,246.94};
+float octave24[] = {261.63,277.18,293.66,311.13,329.63,349.23,369.99,392.00,415.30,440.00,466.16,493.88};
+float octave25[] = {523.25,554.37,587.33,622.25,659.26,698.46,739.99,783.99,830.61,880.00,932.33,987.77};
+float octave26[] = {1046.50,1108.73,1174.66,1244.51,1318.51,1396.91,1479.98,1567.98,1661.22,1760.00,1864.66,1975.53};
+float octave27[] = {2093.00,2217.46,2349.32,2489.02,2637.02,2793.83,2959.96,3135.96,3322.44,3520.00,3729.31,3951.07};
+float octave28[] = {4186.01,4434.92,4698.64,4978.03,5274.04,5587.65,5919.91,6271.93,6644.88,7040.00,7458.62,7902.13};
+float* octaves2[] = {octave20, octave21, octave22, octave23, octave24, octave25, octave26, octave27, octave28};
 
+void reset(){//clea out some variables
+  index = 0;//reset index
+  noMatch = 0;//reset match couner
+  maxSlope = 0;//reset slope
+}
+
+// can be used if we want it
+void checkClipping(){//manage clipping indicator LED
+  if (clipping){//if currently clipping
+    PORTH &= ~(1<<PORTH6);//turn off clipping indicator led
+    clipping = 0;
+  }
+}
+unsigned char s1[] = "Hello One";
+  unsigned char s2[] = "Hello Two";
 int main(){
   for(int i=0;i<NUM_NOTES;i++){
     noteHistory[i] = 255;
@@ -89,8 +109,8 @@ int main(){
   }
   noteHistory[NUM_NOTES] = 0;
   octaveHistory[NUM_NOTES] = 0;
-  DDRB&=~(1<<DDB7);
-  PORTB|=(1<<PORTB7);
+  DDRG&=~(1<<DDG5);
+  PORTG|=(1<<PORTG5);
   Serial.begin(9600);
   Serial.println("Starting...");
   Serial.println("Initializing LEDs");
@@ -102,12 +122,13 @@ int main(){
   writeToMatrix(0x0F, 0x00); // display test register - set to normal operation (0x01)
   Serial.println("Initializing timer 1");
   initTimer1();
+  initTimer0();
   Serial.println("Initializing Switch");
-  initSwitchPB3();
+  initSwitches();
   Serial.println("Initializing PWM");
   initPWM_Pins();
   Serial.println("Initializing LCD");
-  initLCDPins();
+  initLCD();
   Serial.println("Initializing ADC");
   initADC();
   Serial.println("Done Initializing");
@@ -119,7 +140,8 @@ int main(){
     Serial.flush();
     delayMs(1000);
     //eightBitCommandWithDelay(0b00011100,40);
-    if(PINA & (1<<PB2)){//change to the pin for the replay button
+    if(!(PINB & (1<<PINB7))){//change to the pin for the replay button
+      Serial.println("Replay button pressed");
       playing = true;
       char curNote = noteHistory[0];
       char curOctave = octaveHistory[0];
@@ -127,25 +149,34 @@ int main(){
       writeNote(curNote);
       //Display note history on LCD
       moveCursor(0,0);
-      writeString(noteHistory);
+      writeString(noteToString(noteHistory,NUM_NOTES));
       moveCursor(1,0);
-      writeString(octaveHistory);
+      writeString(octaveToString(octaveHistory,NUM_NOTES));
       //play current note on the speaker for a little bit
-      IncFrequency(octaves[curOctave][curNote]);
+      IncFrequency(octaves2[curOctave][curNote]);
       for(int i=0;i<NUM_NOTES-1;i++){//remove the first note from the history
         noteHistory[i] = noteHistory[i+1];
         octaveHistory[i] = octaveHistory[i+1];
       }
     } else {
+      if(!playing){
+        Serial.println("Playing is false");
+      }
+      Serial.print("Playing=");
+      Serial.println(playing);
+      Serial.println(7);
       if(playing){
+        Serial.println(6);
         for(int i=0;i<NUM_NOTES;i++){
-          noteHistory[i] = -1;
-          octaveHistory[i] = -1;
+          noteHistory[i] = 0;
+          octaveHistory[i] = 0;
         }
       }
+      Serial.println(8);
       playing = false;
     }
-    if(PINA&(1<<PB3) && !playing){//change to the pin for the record button
+    Serial.println(5);
+    if(!(PINB&(1<<PINB5)) && !playing){//change to the pin for the record button
       frequency = SAMPLE_RATE/period;
       Serial.print("Frequency: ");
       Serial.println(frequency);
@@ -165,22 +196,24 @@ int main(){
         octaveHistory[0]=octave;
       }
       //Print note to the ledMatrix
+      Serial.print("Note: ");
+      Serial.print(note);
       writeNote(note);
       //Print note history to LCD
       moveCursor(0,0);
-      writeString(noteHistory);
+      writeString(noteToString(noteHistory,NUM_NOTES));
       moveCursor(1,0);
-      writeString(octaveHistory);
+      writeString(octaveToString(octaveHistory,NUM_NOTES));
     }
     
     // needed if we want an indicator light that for when sound is out of range
     if (clipping){//if currently clipping
-      PORTB &= B11011111;//turn off clipping indicator led
+      PORTH &= ~(1<<PORTH6);//turn off clipping indicator led
       clipping = 0;
     }
 
-    return 0;
   }
+  return 0;
 }
 
 /* Implement an Pin Change Interrupt which handles the switch being
@@ -190,7 +223,7 @@ int main(){
 */
 ISR(ADC_vect) {//when new ADC value ready
   
-  PORTB &= B11101111;//set pin 12 low
+  PORTH &= ~(1<<PORTH6);//set pin 12 low, LED indicator
   prevData = newData;//store previous value
   newData = ADCH;//get value from A0
   if (prevData < 127 && newData >=127){//if increasing and crossing midpoint
@@ -201,7 +234,7 @@ ISR(ADC_vect) {//when new ADC value ready
       timer[index] = time;
       time = 0;
       if (index == 0){//new max slope just reset
-        PORTB |= B00010000;//set pin 12 high
+        PORTH |= (1<<PORTH6);//set pin 12 high
         noMatch = 0;
         index++;//increment index
       }
@@ -216,7 +249,7 @@ ISR(ADC_vect) {//when new ADC value ready
         timer[0] = timer[index];
         slope[0] = slope[index];
         index = 1;//set index to 1
-        PORTB |= B00010000;//set pin 12 high
+        PORTH |= (1<<PORTH6);//set pin 12 high
         noMatch = 0;
       }
       else{//crossing midpoint but not match
@@ -241,7 +274,7 @@ ISR(ADC_vect) {//when new ADC value ready
   }
     
   if (newData == 0 || newData == 1023){//if clipping
-    PORTB |= B00100000;//set pin 13 high- turn on clipping indicator led
+    PORTH |= (1<<PORTH6);//set pin 13 high- turn on clipping indicator led
     clipping = 1;//currently clipping
   }
   
@@ -259,16 +292,4 @@ ISR(ADC_vect) {//when new ADC value ready
   
 }
 
-void reset(){//clea out some variables
-  index = 0;//reset index
-  noMatch = 0;//reset match couner
-  maxSlope = 0;//reset slope
-}
 
-// can be used if we want it
-void checkClipping(){//manage clipping indicator LED
-  if (clipping){//if currently clipping
-    PORTB &= B11011111;//turn off clipping indicator led
-    clipping = 0;
-  }
-}

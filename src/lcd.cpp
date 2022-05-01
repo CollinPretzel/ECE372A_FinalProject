@@ -2,6 +2,22 @@
 // Net ID: 
 // Date: 
 // Assignment: Lab 3
+//
+// PINS:
+// - VSS - Ground
+// - VDD - 5V
+// - V0 - 10k Potentiometer between 0V-5V
+// - RS - Pin 12 : PORTB6
+// - RW - Ground
+// - E - Pin 10 : PORTB4
+// - D0 - N/A
+// - D1 - N/A
+// - D2 - N/A
+// - D3 - N/A
+// - D4 - Pin 22 : PORTA0
+// - D5 - Pin 23 : PORTA1
+// - D6 - Pin 24 : PORTA2
+// - D7 - Pin 25 : PORTA3
 //----------------------------------------------------------------------//
 #include "lcd.h"
 #include "timer.h"
