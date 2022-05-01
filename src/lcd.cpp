@@ -6,7 +6,7 @@
 // PINS:
 // - VSS - Ground
 // - VDD - 5V
-// - V0 - 10k Potentiometer between 0V-5V
+// - V0 - 10k Potentiometer between 0V-5V for contrast dial
 // - RS - Pin 12 : PORTB6
 // - RW - Ground
 // - E - Pin 10 : PORTB4
@@ -18,6 +18,8 @@
 // - D5 - Pin 23 : PORTA1
 // - D6 - Pin 24 : PORTA2
 // - D7 - Pin 25 : PORTA3
+// - A - 5V                Backlight Power
+// - K - Ground            Backlight Power
 //----------------------------------------------------------------------//
 #include "lcd.h"
 #include "timer.h"
