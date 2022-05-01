@@ -1,5 +1,8 @@
 // Description: This file implements the initialization of an external
 // switch.
+// PINS:
+// - Switch 1: Pin 11 : PORTB5
+// - Switch 2: Pin 13 : PORTB7
 //----------------------------------------------------------------------//
 
 #include "switch.h"
@@ -8,9 +11,9 @@
 /*
  * Initializes pull-up resistor on PB3 and sets it into input mode
  */
-void initSwitchPB3(){
-  DDRB &= ~(1<<DDB3); // Set it to input mode
-  PORTB |= (1<<PORTB3); // Enable pull-up resistor
-  PCICR |= (1<<PCIE0); // Enables interrupt for PortB pins, e.g. PB3
-  PCMSK0 |= (1<<PCINT3); // PB3 is tagged with PCINT3
+void initSwitches(){
+  DDRB &= ~(1<<DDB7); // Set it to input mode
+  DDRB &= ~(1<<DDB5); // Set it to input mode
+  PORTB |= (1<<PORTB7); // Enable pull-up resistor
+  PORTB |= (1<<PORTB5); // Enable pull-up resistor
 }

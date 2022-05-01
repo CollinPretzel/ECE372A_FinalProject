@@ -105,6 +105,7 @@ void writeNote(unsigned char note){
          writeToMatrix(0x06, 0b01001000);
          writeToMatrix(0x07, 0b01000000);
          writeToMatrix(0x08, 0b11100000);
+         break;
       case 7: // G
          writeToMatrix(0x01, 0b00000000);
          writeToMatrix(0x02, 0b00111111);
