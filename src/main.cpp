@@ -46,11 +46,12 @@ int slope[10];//storage for slope of events
 unsigned int totalTimer;//used to calculate period
 volatile unsigned int period;//storage for period of wave
 volatile float timePasssed = 0.0;
-volatile bool counting = true;
+volatile bool isCounting = true; // renamed for clarity
 byte index = 0;//current storage index
 float frequency;//storage for frequency calculations
-int maxSlope = 0;//used to calculate max slope as trigger point
+//int maxSlope = 0;//used to calculate max slope as trigger point
 int newSlope;//storage for incoming slope data
+int prevSlope; // storage for last calculated slope
 // ADC slope match variables
 byte noMatch = 0;//counts how many non-matches you've received to reset variables if it's been too long
 byte slopeTol = 3;//slope tolerance (adjustable)
@@ -219,11 +220,33 @@ int main(){
   return 0;
 }
 
-/* Implement an Pin Change Interrupt which handles the switch being
-* pressed and released. When the switch is pressed and released, the LEDs
-* change at twice the original rate. If the LEDs are already changing at twice
-* the original rate, it goes back to the original rate.
-*/
+ISR(ADC_vect) {
+    prevData = newData;
+    newData = ADCH;
+    prevSlope = newSlope;
+    newSlope = newData-prevData;
+    
+    // technically, this only measures every other peak, but the frequency is high
+    // enough that it'll be fairly accurate
+    if ((prevSlope > 0) & (newSlope <= 0)) { // local maximum reached!
+        if (isCounting) {
+            PORTB |= (1 << PORTB4); // toggle indicator light
+            final = readTCNT();
+            timePassed = (final - overflowCnt*65535 - initial)/16;
+            frequency = 16000000/(final + overflowCnt*65535 - initial);
+            isCounting = false;
+        }
+        else {
+            PORTB &= ~(1 << PORTB4); // toggle indicator light
+            timePassed = 0;
+            overflowCnt = 0;
+            initial = readTCNT();
+            isCounting = true;
+        }
+    }
+}
+
+/* take this line out to revert to past ADC interrupt
 ISR(ADC_vect) {//when new ADC value ready
   // Incredibly rudimentary ADC frequency detection for sinusoidal waves
   PORTH &= ~(1<<PORTH6);//set pin 12 low, LED indicator
