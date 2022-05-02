@@ -7,6 +7,19 @@
 #include "timer.h"
 //You many use any timer you wish for the microsecond delay and the millisecond delay
 
+void initTimer3(){
+	//Set Normal Mode
+    TCCR3A&=~(1<<WGM30);
+    TCCR3A&=~(1<<WGM31);
+    TCCR3B&=~(1<<WGM32);
+    TCCR3B&=~(1<<WGM33);
+    // We want free-running mode so we can assess TCNT value and then number of overflow triggers
+    // Starting clock with prescaler of 1, as high a resolution as possible.. theoretically
+    TCCR3B &= ~((1 << CS32)|(1 << CS31));
+    TCCR3B |= (1 << CS30);
+    // Enable Overflow interrupt TOIE3 when overflow count is wanted
+    // TIMSK3 |= (1 << TOIE3);
+}
 
 /* Initialize timer 1, you should not turn the timer on here. Use CTC mode  .*/
 void initTimer1() {
