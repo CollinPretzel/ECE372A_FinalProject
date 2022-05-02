@@ -45,6 +45,8 @@ int timer[10];//sstorage for timing of events
 int slope[10];//storage for slope of events
 unsigned int totalTimer;//used to calculate period
 volatile unsigned int period;//storage for period of wave
+volatile float timePasssed = 0.0;
+volatile bool counting = true;
 byte index = 0;//current storage index
 float frequency;//storage for frequency calculations
 int maxSlope = 0;//used to calculate max slope as trigger point
@@ -177,7 +179,7 @@ int main(){
     }
     Serial.println(5);
     if(!(PINB&(1<<PINB5)) && !playing){//change to the pin for the record button
-      frequency = SAMPLE_RATE/period;
+      //frequency = SAMPLE_RATE/period;
       Serial.print("Frequency: ");
       Serial.println(frequency);
       unsigned char octave = 0;
@@ -222,10 +224,51 @@ int main(){
 * the original rate, it goes back to the original rate.
 */
 ISR(ADC_vect) {//when new ADC value ready
-  
+  // Incredibly rudimentary ADC frequency detection for sinusoidal waves
   PORTH &= ~(1<<PORTH6);//set pin 12 low, LED indicator
   prevData = newData;//store previous value
   newData = ADCH;//get value from A0
+  if (prevData < 127 && newData >=127){//if increasing and crossing midpoint
+    PORTB &= ~(1 << PORTB4);
+    newSlope = newData - prevData;//calculate slope
+    if (abs(newSlope-maxSlope)<slopeTol){//if slopes are ==
+      if(counting){
+        // Stop clock and calculate time
+        //TCCR3B &= ~((1 << CS32)|(1 << CS31)|(1 << CS30));
+        PORTB |= (1 << PORTB4);
+        final = readTCNT();
+        timePassed = (final + overflowCnt*65535 - initial)/16.0;
+        frequency = 16000000.0/(final + overflowCnt*65535 - initial);
+        //Serial.println(frequency);
+        counting = false;
+      }
+      else{
+        // Start clock and reset time
+        timePassed = 0;
+        overflowCnt = 0;
+        initial = readTCNT();
+        PORTB &= ~(1 << PORTB4);
+        // Starting clock with prescaler of 1, as high a resolution as possible.. theoretically
+        //TCCR3B &= ~((1 << CS32)|(1 << CS31));
+        //TCCR3B |= (1 << CS30);
+        counting = true;
+      }
+    }
+  }
+  else if (newSlope>maxSlope){//if new slope is much larger than max slope
+      maxSlope = newSlope;
+      time = 0;//reset clock
+      noMatch = 0;
+      index = 0;//reset index
+  }
+  else{//slope not steep enough
+      noMatch++;//increment no match counter
+      if (noMatch>9){
+        reset();
+      }
+    }
+}
+/*
   if (prevData < 127 && newData >=127){//if increasing and crossing midpoint
     newSlope = newData - prevData;//calculate slope
     if (abs(newSlope-maxSlope)<slopeTol){//if slopes are ==
@@ -290,6 +333,6 @@ ISR(ADC_vect) {//when new ADC value ready
     maxAmp = 0;
   }
   
-}
+}*/
 
 
