@@ -122,7 +122,8 @@ int main(){
   writeToMatrix(0x0B, 0x07); // scanning all rows and columns
   writeToMatrix(0x0C,0x01); // set shutdown register to normal operation (0x01)
   writeToMatrix(0x0F, 0x00); // display test register - set to normal operation (0x01)
-  Serial.println("Initializing timer 1");
+  Serial.println("Initializing timers");
+  initTimer3();
   initTimer1();
   initTimer0();
   Serial.println("Initializing Switch");
