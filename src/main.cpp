@@ -38,32 +38,32 @@ unsigned char noteHistory[NUM_NOTES+1];
 unsigned char octaveHistory[NUM_NOTES+1];
 
 // ADC variables
-byte newData = 0;
-byte prevData = 0;
-unsigned int time = 0;//keeps time and sends vales to store in timer[] occasionally
-int timer[10];//sstorage for timing of events
-int slope[10];//storage for slope of events
-unsigned int totalTimer;//used to calculate period
+volatile byte newData = 0;
+volatile byte prevData = 0;
+volatile unsigned int time = 0;//keeps time and sends vales to store in timer[] occasionally
+volatile int timer[10];//sstorage for timing of events
+volatile int slope[10];//storage for slope of events
+volatile unsigned int totalTimer;//used to calculate period
 volatile unsigned int period;//storage for period of wave
-unsigned int overflowCnt = 0;
-float timePassed;
+volatile unsigned int overflowCnt = 0;
+volatile float timePassed;
 volatile unsigned int initial, final;
 volatile bool isCounting = true; // renamed for clarity
-byte index = 0;//current storage index
-float frequency;//storage for frequency calculations
-int maxSlope = 0;//used to calculate max slope as trigger point
-int newSlope;//storage for incoming slope data
-int prevSlope; // storage for last calculated slope
+volatile byte index = 0;//current storage index
+volatile float frequency;//storage for frequency calculations
+volatile int maxSlope = 0;//used to calculate max slope as trigger point
+volatile int newSlope;//storage for incoming slope data
+volatile int prevSlope; // storage for last calculated slope
 // ADC slope match variables
-byte noMatch = 0;//counts how many non-matches you've received to reset variables if it's been too long
-byte slopeTol = 3;//slope tolerance (adjustable)
-int timerTol = 10;//timer tolerance (adjustable)
+volatile byte noMatch = 0;//counts how many non-matches you've received to reset variables if it's been too long
+volatile byte slopeTol = 3;//slope tolerance (adjustable)
+volatile int timerTol = 10;//timer tolerance (adjustable)
 
 //variables for amp detection
-unsigned int ampTimer = 0;
-byte maxAmp = 0;
-byte checkMaxAmp;
-byte ampThreshold = 30;//raise if you have a very noisy signal
+volatile unsigned int ampTimer = 0;
+volatile byte maxAmp = 0;
+volatile byte checkMaxAmp;
+volatile byte ampThreshold = 30;//raise if you have a very noisy signal
 
 /*
  * Define a set of states that can be used in the state machine using an enum.
@@ -79,7 +79,7 @@ enum LEDState{smile,frown};
 volatile state button = wp;
 volatile LEDState led = smile;
 
-boolean clipping = 0;
+volatile boolean clipping = 0;
 
 float octave20[] = {16.35,17.32,18.35,19.45,20.60,21.83,23.12,24.50,25.96,27.50,29.14,30.87};
 float octave21[] = {32.70,34.65,36.71,38.89,41.20,43.65,46.25,49.00,51.91,55.00,58.27,61.74};
