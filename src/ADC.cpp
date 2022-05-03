@@ -30,8 +30,8 @@ void initADC() {
     ADCSRA |= (1 << ADIE);
 
     // do we need a prescalar? This is a prescalar of 2. Sample rate ??? kHz
-    ADCSRA |= (1 << ADPS0);
-    ADCSRA &= ~((1 << ADPS2) | (1 << ADPS1));
+    ADCSRA |= (1 << ADPS0) | (1 << ADPS2);
+    ADCSRA &= ~((1 << ADPS1));
 
     // disable ADC0 pin digital input - pin A0 on board
     DIDR0 |= (1 << ADC0D);

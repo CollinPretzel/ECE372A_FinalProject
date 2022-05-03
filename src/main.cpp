@@ -45,11 +45,13 @@ int timer[10];//sstorage for timing of events
 int slope[10];//storage for slope of events
 unsigned int totalTimer;//used to calculate period
 volatile unsigned int period;//storage for period of wave
-volatile float timePasssed = 0.0;
+unsigned int overflowCnt = 0;
+float timePassed;
+volatile unsigned int initial, final;
 volatile bool isCounting = true; // renamed for clarity
 byte index = 0;//current storage index
 float frequency;//storage for frequency calculations
-//int maxSlope = 0;//used to calculate max slope as trigger point
+int maxSlope = 0;//used to calculate max slope as trigger point
 int newSlope;//storage for incoming slope data
 int prevSlope; // storage for last calculated slope
 // ADC slope match variables
@@ -96,15 +98,17 @@ void reset(){//clea out some variables
   maxSlope = 0;//reset slope
 }
 
-// can be used if we want it
-void checkClipping(){//manage clipping indicator LED
-  if (clipping){//if currently clipping
-    PORTH &= ~(1<<PORTH6);//turn off clipping indicator led
-    clipping = 0;
-  }
+int readTCNT(){
+  unsigned char sreg;
+  sreg = SREG;
+  cli();
+  int i = TCNT3;
+  SREG = sreg;
+  return i;
 }
+
 unsigned char s1[] = "Hello One";
-  unsigned char s2[] = "Hello Two";
+unsigned char s2[] = "Hello Two";
 int main(){
   for(int i=0;i<NUM_NOTES;i++){
     noteHistory[i] = 255;
@@ -138,7 +142,6 @@ int main(){
   Serial.println("Done Initializing");
   sei(); // Enable global interrupts.
   bool playing = false;
-  char count = 0;
 // while loop
   while(1){
     Serial.flush();
@@ -220,62 +223,65 @@ int main(){
   return 0;
 }
 
-ISR(ADC_vect) {
-    prevData = newData;
-    newData = ADCH;
-    prevSlope = newSlope;
-    newSlope = newData-prevData;
-    
-    // technically, this only measures every other peak, but the frequency is high
-    // enough that it'll be fairly accurate
-    if ((prevSlope > 0) & (newSlope <= 0)) { // local maximum reached!
-        if (isCounting) {
-            PORTB |= (1 << PORTB4); // toggle indicator light
-            final = readTCNT();
-            timePassed = (final - overflowCnt*65535 - initial)/16;
-            frequency = 16000000/(final + overflowCnt*65535 - initial);
-            isCounting = false;
-        }
-        else {
-            PORTB &= ~(1 << PORTB4); // toggle indicator light
-            timePassed = 0;
-            overflowCnt = 0;
-            initial = readTCNT();
-            isCounting = true;
-        }
-    }
+ISR(TIMER3_OVF_vect){
+  if(isCounting){
+      //Serial.println("Triggered overflow");
+      overflowCnt++;
+  }
 }
 
-/* take this line out to revert to past ADC interrupt
 ISR(ADC_vect) {//when new ADC value ready
-  // Incredibly rudimentary ADC frequency detection for sinusoidal waves
-  PORTH &= ~(1<<PORTH6);//set pin 12 low, LED indicator
+  
   prevData = newData;//store previous value
   newData = ADCH;//get value from A0
+  /*newSlope = newData - prevData;
+  if ((newSlope > 0) & (newSlope - slopeTol < 0)){ // Theoretically identifying peaks?
+    if (counting){
+      // Stop clock and calculate time
+      TCCR3B &= ~((1 << CS32)|(1 << CS31)|(1 << CS30));
+      PORTB |= (1 << PORTB4);
+      final = readTCNT();
+      timePassed = (final + overflowCnt*65535 - initial)/8.0;
+      Serial.println(timePassed);
+      counting = false;
+    }
+    else{
+      // Start clock and reset time
+      timePassed = 0;
+      overflowCnt = 0;
+      initial = readTCNT();
+      PORTB &= ~(1 << PORTB4);
+      // Starting clock with prescaler of 1, as high a resolution as possible.. theoretically
+      TCCR3B &= ~((1 << CS32)|(1 << CS31));
+      TCCR3B |= (1 << CS30);
+      counting = true;
+    }
+  }*/
   if (prevData < 127 && newData >=127){//if increasing and crossing midpoint
-    PORTB &= ~(1 << PORTB4);
-    newSlope = newData - prevData;//calculate slope
+    //PORTB &= ~(1 << PORTB4);
+    newSlope = newData-prevData;
     if (abs(newSlope-maxSlope)<slopeTol){//if slopes are ==
-      if(counting){
+      if(isCounting){
         // Stop clock and calculate time
         //TCCR3B &= ~((1 << CS32)|(1 << CS31)|(1 << CS30));
-        PORTB |= (1 << PORTB4);
+        //PORTB |= (1 << PORTB4);
         final = readTCNT();
+        Serial.println(overflowCnt);
         timePassed = (final + overflowCnt*65535 - initial)/16.0;
         frequency = 16000000.0/(final + overflowCnt*65535 - initial);
-        //Serial.println(frequency);
-        counting = false;
+        Serial.println(frequency);
+        isCounting = false;
       }
       else{
         // Start clock and reset time
         timePassed = 0;
         overflowCnt = 0;
         initial = readTCNT();
-        PORTB &= ~(1 << PORTB4);
+        //PORTB &= ~(1 << PORTB4);
         // Starting clock with prescaler of 1, as high a resolution as possible.. theoretically
         //TCCR3B &= ~((1 << CS32)|(1 << CS31));
         //TCCR3B |= (1 << CS30);
-        counting = true;
+        isCounting = true;
       }
     }
   }
@@ -292,6 +298,7 @@ ISR(ADC_vect) {//when new ADC value ready
       }
     }
 }
+
 /*
   if (prevData < 127 && newData >=127){//if increasing and crossing midpoint
     newSlope = newData - prevData;//calculate slope
