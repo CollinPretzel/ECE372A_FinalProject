@@ -25,7 +25,7 @@ void initMic(){
 }
 void freqID(unsigned char *note, unsigned char *octave, float freq){
     for(int i = 0; i < 9; i++){
-        if(freq < octaves[i][0] || freq > octaves[i][8]){
+        if(freq < octaves[i][0] || freq > octaves[i][11]){
             continue;
         }
         if(myAbs(freq-octaves[i][0]) < myAbs(freq-octaves[i][1])){
