@@ -5,6 +5,6 @@
 #define PWM_H
 
 void initPWM_Pins();
-void IncFrequency(float frequency);
+void IncFrequency(float frequency,bool on);
 
 #endif
