@@ -145,6 +145,7 @@ int main(){
 // while loop
   while(1){
     Serial.flush();
+    IncFrequency(16000000); // Shut up the piezo
     delayMs(1000);
     //eightBitCommandWithDelay(0b00011100,40);
     if(!(PINB & (1<<PINB7))){//change to the pin for the replay button
@@ -185,7 +186,7 @@ int main(){
     }
     Serial.println(5);
     if(!(PINB&(1<<PINB5)) && !playing){//change to the pin for the record button
-      //frequency = SAMPLE_RATE/period;
+      IncFrequency(16000000); // turn of PWM
       Serial.print("Frequency: ");
       Serial.println(frequency);
       unsigned char octave = 0;
@@ -258,6 +259,7 @@ ISR(ADC_vect) {//when new ADC value ready
       counting = true;
     }
   }*/
+  //Serial.println(newData);
   if (prevData < 127 && newData >=127){//if increasing and crossing midpoint
     //PORTB &= ~(1 << PORTB4);
     newSlope = newData-prevData;
