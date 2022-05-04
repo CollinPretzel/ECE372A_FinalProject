@@ -14,10 +14,12 @@ void initPWM_Pins(){
     DDRH |= (1<<DDH5); //Set Pin 8 on board to output, which is OC4C, PORTH5, PWM
 }
 
-void IncFrequency(float frequency){
-    OCR4A = int(16000000 / frequency);
-    OCR4AH = OCR4A >> 8;
-    OCR4AL = OCR4A;
-    OCR4CH = OCR4AH >> 1;
-    OCR4CL = OCR4AL >> 1;
+void IncFrequency(float frequency, bool on){
+    if(on){
+        OCR4A = 16000000 / frequency;
+        OCR4C = OCR4A >> 1;
+    } else {
+        OCR4C = 0;
+    }
+    PORTB|=(1<<PORTB7);
 }

@@ -161,7 +161,7 @@ int main(){
       moveCursor(1,0);
       writeString(octaveToString(octaveHistory,NUM_NOTES));
       //play current note on the speaker for a little bit
-      IncFrequency(octaves2[curOctave][curNote]);
+      IncFrequency(octaves2[curOctave][curNote],1);
       for(int i=0;i<NUM_NOTES-1;i++){//remove the first note from the history
         noteHistory[i] = noteHistory[i+1];
         octaveHistory[i] = octaveHistory[i+1];
@@ -170,6 +170,7 @@ int main(){
       if(!playing){
         Serial.println("Playing is false");
       }
+      IncFrequency(1200,0);
       Serial.print("Playing=");
       Serial.println(playing);
       Serial.println(7);
