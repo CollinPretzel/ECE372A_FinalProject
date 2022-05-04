@@ -266,10 +266,10 @@ ISR(ADC_vect) {//when new ADC value ready
         //TCCR3B &= ~((1 << CS32)|(1 << CS31)|(1 << CS30));
         //PORTB |= (1 << PORTB4);
         final = readTCNT();
-        Serial.println(overflowCnt);
+        //Serial.println(overflowCnt);
         timePassed = (final + overflowCnt*65535 - initial)/16.0;
         frequency = 16000000.0/(final + overflowCnt*65535 - initial);
-        Serial.println(frequency);
+        //Serial.println(frequency);
         isCounting = false;
       }
       else{
@@ -293,7 +293,7 @@ ISR(ADC_vect) {//when new ADC value ready
   }
   else{//slope not steep enough
       noMatch++;//increment no match counter
-      if (noMatch>9){
+      if (noMatch>300){ // Range of 20 Hz to 5 kHz, could be improved w/ a Hi-Fi and Lo-Fi bool
         reset();
       }
     }
