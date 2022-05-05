@@ -14,6 +14,6 @@
 void initSwitches(){
   DDRB &= ~(1<<DDB7); // Set it to input mode
   DDRB &= ~(1<<DDB5); // Set it to input mode
-  PORTB |= (1<<PORTB7); // Enable pull-up resistor
-  PORTB |= (1<<PORTB5); // Enable pull-up resistor
+  PORTB |= (1<<PORTB7); // Enable pull-up resistor for playback button
+  PORTB |= (1<<PORTB5); // Enable pull-up resistor for recording button
 }

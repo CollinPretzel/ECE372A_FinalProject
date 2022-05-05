@@ -17,7 +17,7 @@ void initPWM_Pins(){
 void IncFrequency(float frequency, bool on){
     if(on){
         OCR4A = 16000000 / frequency;
-        OCR4C = OCR4A >> 1;
+        OCR4C = OCR4A >> 1; // 50% Duty cycle
     } else {
         OCR4C = 0;
     }

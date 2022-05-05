@@ -39,15 +39,3 @@ void initADC() {
     // start conversion (we're in free running mode so this just constantly converts)
     ADCSRA |= (1 << ADSC);
 }
-
-int getADCOutput() {
-    int outputValue = 0;
-    ADCSRA |= (1 << ADSC);
-    while(1) {
-        if (ADCSRA & (1 << ADIF)) {
-            outputValue = ADCL;
-            outputValue += ((unsigned int) ADCH) << 8; // this line definitely won't work
-            return outputValue;
-        }
-    }
-}

@@ -34,7 +34,7 @@ void writeToMatrix(unsigned char addy, unsigned int data){
     PORTB |= (1 << PORTB0); // disable chip select to end SPI frame
 }
 
-void writeNote(unsigned char note){
+void writeNote(unsigned char note){ // Writes the note associated with value 0-11 described in main.cpp
    switch(note){
       case 0: // C
          writeToMatrix(0x01, 0b00000000);

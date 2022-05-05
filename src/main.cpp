@@ -3,17 +3,8 @@
 // Date: 2/18/2022
 // Assignment:     Lab 3
 //
-// Description: This file contains a programmatic overall description of the
-// program. It should never contain assignments to special function registers
-// for the exception key one-line code such as checking the state of the pin.
+// Description: Automatic Pitch and Harmonic Identification (APHID)
 //
-// Requirements:
-// PINS:
-// - 11,13 - Switches
-// - 12 - LCD
-// - 10 - LCD
-// - 9 - Clipping LED
-// - 22,23,24,25 - LCD
 //----------------------------------------------------------------------//
 
 #include <Arduino.h>
@@ -45,9 +36,8 @@ volatile int timer[10];//sstorage for timing of events
 volatile int slope[10];//storage for slope of events
 volatile unsigned int totalTimer;//used to calculate period
 volatile unsigned int period;//storage for period of wave
-volatile unsigned int overflowCnt = 0;
-volatile float timePassed;
-volatile unsigned int initial, final;
+volatile unsigned int overflowCnt = 0; // Track the number of times Timer 3 overflows
+volatile unsigned int initial, final; // Start and end of timer counting
 volatile bool isCounting = true; // renamed for clarity
 volatile byte index = 0;//current storage index
 volatile float frequency;//storage for frequency calculations
@@ -65,22 +55,9 @@ volatile byte maxAmp = 0;
 volatile byte checkMaxAmp;
 volatile byte ampThreshold = 30;//raise if you have a very noisy signal
 
-/*
- * Define a set of states that can be used in the state machine using an enum.
- * States: Waiting for press, Press debounce, Waiting for release, Release debounce
- */
-enum state{wp,pd,wr,rd};
-/*
-  * Define a set of states for the LED array output using an enum.
-  * States: Smiley face, Frowny face
-  */
-enum LEDState{smile,frown};
-// Initialize states.  Remember to use volatile 
-volatile state button = wp;
-volatile LEDState led = smile;
+volatile boolean clipping = 0; // In case the noise clips for future implementations
 
-volatile boolean clipping = 0;
-
+// C, C#, D, D#, E, F, F#, G, G#, A, A#, B
 float octave20[] = {16.35,17.32,18.35,19.45,20.60,21.83,23.12,24.50,25.96,27.50,29.14,30.87};
 float octave21[] = {32.70,34.65,36.71,38.89,41.20,43.65,46.25,49.00,51.91,55.00,58.27,61.74};
 float octave22[] = {65.41,69.30,73.42,77.78,82.41,87.31,92.50,98.00,103.83,110.00,116.54,123.47};
@@ -98,17 +75,15 @@ void reset(){//clea out some variables
   maxSlope = 0;//reset slope
 }
 
-int readTCNT(){
+int readTCNT(){ // Reads the value from Timer 3's counter
   unsigned char sreg;
-  sreg = SREG;
-  cli();
+  sreg = SREG; // Store the current state of the interrupt status
+  cli(); // Remove interrupt capability to properly read TCNT
   int i = TCNT3;
-  SREG = sreg;
+  SREG = sreg; // Replace all interrupt triggers
   return i;
 }
 
-unsigned char s1[] = "Hello One";
-unsigned char s2[] = "Hello Two";
 int main(){
   for(int i=0;i<NUM_NOTES;i++){
     noteHistory[i] = 255;
@@ -160,7 +135,7 @@ int main(){
       moveCursor(1,0);
       writeString(octaveToString(octaveHistory,NUM_NOTES));
       //play current note on the speaker for a little bit
-      IncFrequency(octaves2[curOctave][curNote],1);
+      IncFrequency(octaves2[curOctave][curNote],1); // Play the current note in the history
       for(int i=0;i<NUM_NOTES-1;i++){//remove the first note from the history
         noteHistory[i] = noteHistory[i+1];
         octaveHistory[i] = octaveHistory[i+1];
@@ -169,27 +144,24 @@ int main(){
       if(!playing){
         Serial.println("Playing is false");
       }
-      IncFrequency(1200,0);
+      IncFrequency(1200,0); // Turns of the piezo buzzer
       Serial.print("Playing=");
       Serial.println(playing);
-      Serial.println(7);
       if(playing){
-        Serial.println(6);
-        for(int i=0;i<NUM_NOTES;i++){
+        for(int i=0;i<NUM_NOTES;i++){ // Clear note history
           noteHistory[i] = 0;
           octaveHistory[i] = 0;
         }
       }
-      Serial.println(8);
       playing = false;
     }
-    Serial.println(5);
     if(!(PINB&(1<<PINB5)) && !playing){//change to the pin for the record button
+      // Serial monitor for debugging and verification
       Serial.print("Frequency: ");
       Serial.println(frequency);
       unsigned char octave = 0;
       unsigned char note = 0;
-      freqID(&note,&octave,frequency);
+      freqID(&note,&octave,frequency); // Identifies the note and octave from the given frequency()
       Serial.print("Note: ");
       Serial.print(note);
       Serial.print(" Octave: ");
@@ -225,8 +197,9 @@ int main(){
 
 ISR(TIMER3_OVF_vect){
   if(isCounting){
-      //Serial.println("Triggered overflow");
-      overflowCnt++;
+    // Supposed to determine how often the timer overflowed to calculate frequency
+    // Ran into some consistency issues in implementation w/ the full code
+    overflowCnt++;
   }
 }
 
@@ -234,54 +207,20 @@ ISR(ADC_vect) {//when new ADC value ready
   
   prevData = newData;//store previous value
   newData = ADCH;//get value from A0
-  /*newSlope = newData - prevData;
-  if ((newSlope > 0) & (newSlope - slopeTol < 0)){ // Theoretically identifying peaks?
-    if (counting){
-      // Stop clock and calculate time
-      TCCR3B &= ~((1 << CS32)|(1 << CS31)|(1 << CS30));
-      PORTB |= (1 << PORTB4);
-      final = readTCNT();
-      timePassed = (final + overflowCnt*65535 - initial)/8.0;
-      Serial.println(timePassed);
-      counting = false;
-    }
-    else{
-      // Start clock and reset time
-      timePassed = 0;
-      overflowCnt = 0;
-      initial = readTCNT();
-      PORTB &= ~(1 << PORTB4);
-      // Starting clock with prescaler of 1, as high a resolution as possible.. theoretically
-      TCCR3B &= ~((1 << CS32)|(1 << CS31));
-      TCCR3B |= (1 << CS30);
-      counting = true;
-    }
-  }*/
-  //Serial.println(newData);
   if (prevData < 127 && newData >=127){//if increasing and crossing midpoint
     //PORTB &= ~(1 << PORTB4);
     newSlope = newData-prevData;
     if (abs(newSlope-maxSlope)<slopeTol){//if slopes are ==
       if(isCounting){
-        // Stop clock and calculate time
-        //TCCR3B &= ~((1 << CS32)|(1 << CS31)|(1 << CS30));
-        //PORTB |= (1 << PORTB4);
         final = readTCNT();
-        //Serial.println(overflowCnt);
-        timePassed = (final + overflowCnt*65535 - initial)/16.0;
-        frequency = 16000000.0/(final + overflowCnt*65535 - initial);
-        //Serial.println(frequency);
+        // unneeded timePassed = (final + overflowCnt*65535 - initial)/16.0; // Calculation for number of counts passed, adjusted for prescaler
+        frequency = 16000000.0/(final + overflowCnt*65535 - initial); // frequency calculated from using counts and timer 3's frequency
         isCounting = false;
       }
       else{
-        // Start clock and reset time
-        timePassed = 0;
+        // reset time
         overflowCnt = 0;
         initial = readTCNT();
-        //PORTB &= ~(1 << PORTB4);
-        // Starting clock with prescaler of 1, as high a resolution as possible.. theoretically
-        //TCCR3B &= ~((1 << CS32)|(1 << CS31));
-        //TCCR3B |= (1 << CS30);
         isCounting = true;
       }
     }
@@ -294,77 +233,8 @@ ISR(ADC_vect) {//when new ADC value ready
   }
   else{//slope not steep enough
       noMatch++;//increment no match counter
-      if (noMatch>300){ // Range of 20 Hz to 5 kHz, could be improved w/ a Hi-Fi and Lo-Fi bool
+      if (noMatch>300){ // Range of 20 Hz to 5 kHz, could be improved w/ a Hi-Fi and Lo-Fi bool, rests slope values if there are no matches for a given time
         reset();
       }
     }
 }
-
-/*
-  if (prevData < 127 && newData >=127){//if increasing and crossing midpoint
-    newSlope = newData - prevData;//calculate slope
-    if (abs(newSlope-maxSlope)<slopeTol){//if slopes are ==
-      //record new data and reset time
-      slope[index] = newSlope;
-      timer[index] = time;
-      time = 0;
-      if (index == 0){//new max slope just reset
-        PORTH |= (1<<PORTH6);//set pin 12 high
-        noMatch = 0;
-        index++;//increment index
-      }
-      else if (abs(timer[0]-timer[index])<timerTol && abs(slope[0]-newSlope)<slopeTol){//if timer duration and slopes match
-        //sum timer values
-        totalTimer = 0;
-        for (byte i=0;i<index;i++){
-          totalTimer+=timer[i];
-        }
-        period = totalTimer;//set period
-        //reset new zero index values to compare with
-        timer[0] = timer[index];
-        slope[0] = slope[index];
-        index = 1;//set index to 1
-        PORTH |= (1<<PORTH6);//set pin 12 high
-        noMatch = 0;
-      }
-      else{//crossing midpoint but not match
-        index++;//increment index
-        if (index > 9){
-          reset();
-        }
-      }
-    }
-    else if (newSlope>maxSlope){//if new slope is much larger than max slope
-      maxSlope = newSlope;
-      time = 0;//reset clock
-      noMatch = 0;
-      index = 0;//reset index
-    }
-    else{//slope not steep enough
-      noMatch++;//increment no match counter
-      if (noMatch>9){
-        reset();
-      }
-    }
-  }
-    
-  if (newData == 0 || newData == 1023){//if clipping
-    PORTH |= (1<<PORTH6);//set pin 13 high- turn on clipping indicator led
-    clipping = 1;//currently clipping
-  }
-  
-  time++;//increment timer at rate of 38.5kHz
-  
-  ampTimer++;//increment amplitude timer
-  if (abs(127-ADCH)>maxAmp){
-    maxAmp = abs(127-ADCH);
-  }
-  if (ampTimer==1000){
-    ampTimer = 0;
-    checkMaxAmp = maxAmp;
-    maxAmp = 0;
-  }
-  
-}*/
-
-

@@ -2,6 +2,5 @@
 #define ADC_H
 
 void initADC();
-int getADCOutput();
 
 #endif

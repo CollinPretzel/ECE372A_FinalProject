@@ -17,8 +17,6 @@ void initTimer3(){
     // Starting clock with prescaler of 1, as high a resolution as possible.. theoretically
     TCCR3B &= ~((1 << CS32)|(1 << CS31));
     TCCR3B |= (1 << CS30);
-    // Enable Overflow interrupt TOIE3 when overflow count is wanted
-    // TIMSK3 |= (1 << TOIE3);
 }
 
 /* Initialize timer 1, you should not turn the timer on here. Use CTC mode  .*/
